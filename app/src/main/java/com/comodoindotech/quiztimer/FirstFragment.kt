@@ -8,7 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
 import com.comodoindotech.quiztimer.databinding.FragmentFirstBinding
+import com.comodoindotech.quiztimer.packages.connection.client.ConnectionListener
 import com.comodoindotech.quiztimer.packages.connection.client.TCPClient
+import com.comodoindotech.quiztimer.packages.connection.models.Commands
+import com.comodoindotech.quiztimer.packages.connection.models.DataRequest
+import com.google.gson.Gson
 import java.io.IOException
 import java.lang.Exception
 import java.net.UnknownHostException
@@ -19,6 +23,7 @@ import java.net.UnknownHostException
 class FirstFragment : Fragment() {
 
     private var _binding: FragmentFirstBinding? = null
+    private var connection: TCPClient? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -59,10 +64,11 @@ class FirstFragment : Fragment() {
     }
 
     fun connectTo(host: String, port: Short){
-        val connection = TCPClient(requireContext())
-        connection.makeConnection(host, port)
+        connection = TCPClient(requireContext())
+        connection!!.makeConnection(host, port)
+        connection!!.setConnectionListener(this.connectionClientListener)
         try {
-            connection.connect();
+            connection!!.connect();
             Log.d("connect", "after connect has run.")
         } catch (e: IOException){
 
@@ -73,4 +79,31 @@ class FirstFragment : Fragment() {
         }
     }
 
+    private val connectionClientListener = object : ConnectionListener {
+        override fun onConnected() {
+            Log.d("client", "onConnected: Terhubung")
+            try{
+                val gson = Gson()
+                val model = DataRequest("Salam kenal", Commands.EMPTY)
+                val data = gson.toJson(model)
+                connection!!.sendData(data)
+
+            } catch (e: Exception){
+                Log.d("client", "tidak dapat mengirim pesan")
+            }
+        }
+
+        override fun onDisconnected() {
+        }
+
+        override fun onResume() {
+        }
+
+        override fun beforeSend(data: String) {
+        }
+
+        override fun afterSend(data: String) {
+        }
+
+    }
 }
